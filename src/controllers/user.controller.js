@@ -5,17 +5,16 @@ import jwt from 'jsonwebtoken';
 
 export const registerUser = async (req, res) => {
 
-    const { name, role, citizenshipNumber, voterID, password } = req.body;
+    const { name, citizenshipNumber, voterID, password } = req.body;
 
-    if (!name || !role || !citizenshipNumber || !voterID || !password) {
+    if (!name || !citizenshipNumber || !voterID || !password) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: "All the fields are required" });
     }
-
     const isUserExists = await User.findOne({ citizenshipNumber, voterID });
 
     if (isUserExists) return res.status(HttpStatus.CONFLICT).json({ message: "User Already Exists" });
 
-    const user = User({ name, role, citizenshipNumber, voterID, password });
+    const user = User({ name, citizenshipNumber, voterID, password });
 
     await user.save()
 
@@ -48,6 +47,31 @@ export const logIn = async (req, res) => {
         message: "User authenticated Successfully",
         data: { name: user.name, citizenshipNumber: user.citizenshipNumber, voterID: user.voterID, token: jwtToken },
     })
+
+}
+
+export const forgotPassword = async (req, res) => {
+
+    const { name, citizenshipNumber, voterID, newPassword } = req.body;
+
+    if (!name || !citizenshipNumber || !voterID || !newPassword) return res.status(HttpStatus.BAD_REQUEST).json({ message: "All the fields required" })
+
+    const user = await User.findOne({ name, citizenshipNumber, voterID });
+
+    if (!user) return res.status(HttpStatus.CONFLICT).json({ message: "User does not exists, Please check the credentials" });
+
+    user.password = newPassword;
+
+    await user.save();
+
+    return res.status(HttpStatus.OK).json({ message: "Password is changed successfully" })
+}
+
+export const getAllUsers = async (req, res) => {
+
+    const users = await User.find({}, { _id: 0 });
+
+    return res.status(HttpStatus.OK).json({ data: users, message: "All Users", })
 
 }
 

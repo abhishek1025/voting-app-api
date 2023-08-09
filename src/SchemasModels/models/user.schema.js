@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             enum: ["user", "admin"],
+            default: "user",
         },
         citizenshipNumber: {
             type: String,
@@ -26,6 +27,10 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        participatedVotingEventID: {
+            type: String,
+            default: ""
+        }
     },
     { timestamps: true }
 );

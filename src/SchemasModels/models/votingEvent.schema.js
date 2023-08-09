@@ -27,6 +27,7 @@ const votingEventSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, "Title is required"],
+        uppercase: true
     },
 
     description: {
@@ -37,6 +38,7 @@ const votingEventSchema = new mongoose.Schema({
     eventLocation: {
         type: String,
         required: [true, "Event Location is required"],
+        uppercase: true
     },
 
     candidates: [candidateSchema],
@@ -52,6 +54,11 @@ const votingEventSchema = new mongoose.Schema({
     isVotingStarted: {
         type: Boolean,
         default: false,
+    },
+
+    votingEventDeleted: {
+        type: Boolean,
+        default: false
     }
 
 }, { timestamps: true })
