@@ -43,9 +43,6 @@ const votingEventSchema = new mongoose.Schema({
 
     candidates: [candidateSchema],
 
-    startDate: Date,
-    endDate: Date,
-
     isVotingFinished: {
         type: Boolean,
         default: false,
@@ -59,6 +56,11 @@ const votingEventSchema = new mongoose.Schema({
     votingEventDeleted: {
         type: Boolean,
         default: false
+    },
+
+    endDate: {
+        type: Date || null,
+        default: null
     }
 
 }, { timestamps: true })

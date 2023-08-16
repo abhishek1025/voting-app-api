@@ -23,7 +23,7 @@ export const createVotingEvent = async (req, res) => {
 
 // get events
 export const getAllVotingEvents = async (req, res) => {
-    const votingEvents = await VotingEvent.find({ votingEventDeleted: false }, { candidates: false });
+    const votingEvents = await VotingEvent.find({ votingEventDeleted: false }).sort({ createdAt: -1 });
 
     return res.status(HttpStatus.OK).json({ data: votingEvents, message: "All voting events" });
 }
@@ -43,8 +43,10 @@ export const addCandidate = async (req, res) => {
     if (!candidateName || !citizenshipNumber || !voterID || !phoneNumber) return res.status(HttpStatus.BAD_REQUEST).json({ message: "All the fields are required" })
 
     //Checking is candidate exists or not
-    const candidate = await User.findOne({ citizenshipNumber, voterID });
-    if (!candidate) return res.status(HttpStatus.NOT_FOUND).json({ message: "User Not found" });
+    const candidate = await User.findOne({ citizenshipNumber, voterID, name: candidateName });
+    if (!candidate) return res.status(HttpStatus.NOT_FOUND).json({ message: "Invalid details, User Not found" });
+
+    if (candidate.role === "admin") return res.status(HttpStatus.CONFLICT).json({ message: "Admin cannot participate in event" });
 
     // Checking if the candidate is already engaged in another voting event
 
@@ -53,13 +55,16 @@ export const addCandidate = async (req, res) => {
 
         const candidatePreviousVotingEvent = await VotingEvent.findOne({ _id: candidate.participatedVotingEventID })
 
+        if (!candidatePreviousVotingEvent) {
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Event does not exists in which user had participated' })
+        }
+
+
         if (!candidatePreviousVotingEvent.isVotingFinished) return res.status(HttpStatus.CONFLICT).json({
             message: "Already engaged in an event, So, Cannot participate in this event"
         });
 
     }
-
-
 
     // Getting event if exists
     const votingEvent = await VotingEvent.findById({ _id: votingEventID })
@@ -251,13 +256,47 @@ export const startVotingEvent = async (req, res) => {
 
     if (!votingEvent) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No such voting Event exists' })
 
+    if (votingEvent.isVotingFinished) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Event has been already ended' })
+
     votingEvent.isVotingStarted = true;
+
+    if (!votingEvent.endDate) {
+        const date = new Date(req.body.endDate)
+        date.setHours(23, 0, 0, 0);
+
+        votingEvent.endDate = date;
+
+        console.log(date)
+    }
 
     await votingEvent.save();
 
     return res.status(HttpStatus.OK).json({ message: 'Voting has started' })
 }
 
+// End the voting process
+export const endVotingEvent = async (req, res) => {
+
+    const { votingEventID } = req.body;
+
+    if (!votingEventID) return res.status(HttpStatus.BAD_REQUEST).json({ message: "Voting Event ID required" })
+
+    // Checking if the document id is valid or not
+    if (!mongoose.Types.ObjectId.isValid(votingEventID)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No such voting Event exists' })
+    }
+
+    const votingEvent = await VotingEvent.findOne({ _id: votingEventID });
+
+    if (!votingEvent) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No such voting Event exists' })
+
+    votingEvent.isVotingStarted = false;
+    votingEvent.isVotingFinished = true
+
+    await votingEvent.save();
+
+    return res.status(HttpStatus.OK).json({ message: 'Voting has ended' })
+}
 
 // Delete or Disable the voting Event
 export const deleteVotingEvent = async (req, res) => {
@@ -273,11 +312,9 @@ export const deleteVotingEvent = async (req, res) => {
 
     const votingEvent = await VotingEvent.findOne({ _id: votingEventID });
 
-    if (!votingEvent || votingEvent.votingEventDeleted) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No such voting Event exists' })
+    if (!votingEvent) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No such voting Event exists' })
 
-    votingEvent.votingEventDeleted = true;
-
-    await votingEvent.save();
+    await VotingEvent.findByIdAndRemove({ _id: votingEventID })
 
     return res.status(HttpStatus.OK).json({ message: 'Voting Event Deleted Successfully' })
 }

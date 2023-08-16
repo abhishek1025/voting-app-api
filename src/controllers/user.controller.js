@@ -10,7 +10,8 @@ export const registerUser = async (req, res) => {
     if (!name || !citizenshipNumber || !voterID || !password) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: "All the fields are required" });
     }
-    const isUserExists = await User.findOne({ citizenshipNumber, voterID });
+
+    const isUserExists = await User.findOne({ $or: [{ citizenshipNumber, voterID }] });
 
     if (isUserExists) return res.status(HttpStatus.CONFLICT).json({ message: "User Already Exists" });
 
@@ -45,7 +46,7 @@ export const logIn = async (req, res) => {
 
     return res.status(HttpStatus.OK).json({
         message: "User authenticated Successfully",
-        data: { name: user.name, citizenshipNumber: user.citizenshipNumber, voterID: user.voterID, token: jwtToken },
+        data: { name: user.name, citizenshipNumber: user.citizenshipNumber, voterID: user.voterID, token: jwtToken, role: user.role, participatedVotingEventID: user.participatedVotingEventID },
     })
 
 }
@@ -74,5 +75,3 @@ export const getAllUsers = async (req, res) => {
     return res.status(HttpStatus.OK).json({ data: users, message: "All Users", })
 
 }
-
-

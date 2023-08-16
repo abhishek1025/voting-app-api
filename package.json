@@ -1,5 +1,5 @@
 {
-    "name": "restro-pos-api",
+    "name": "voting-app",
     "version": "1.0.0",
     "description": "This is the initial development of restro pos api.",
     "main": "index.js",
@@ -27,7 +27,6 @@
         "jsonwebtoken": "^9.0.1",
         "mongo-sanitize": "^1.1.0",
         "mongoose": "^7.3.1",
-        "morgan": "^1.10.0",
-        "nodemon": "^2.0.22"
+        "morgan": "^1.10.0"
     }
 }
